@@ -2,6 +2,14 @@ import numpy as np
 from scipy.linalg import ishermitian
 
 
+class MatrixError(Exception):
+    """
+    Raised when a matrix has a forbidden property
+    """
+
+    pass
+
+
 class Spectral:
     """
     Spectral Analysis of Matrices
@@ -45,13 +53,13 @@ class Spectral:
         self.emult = np.unique(self._elabs, return_counts=True)[1]
 
     def __str__(self):
-        str_spectra = ', '.join([f'{ev:.2f}'.center(5) for ev in self.evals])
-        str_emult = ', '.join([str(ml).center(5) for ml in self.emult])
-        string = f'''Spectral(
+        str_spectra = ", ".join([f"{ev:.2f}".center(5) for ev in self.evals])
+        str_emult = ", ".join([str(ml).center(5) for ml in self.emult])
+        string = f"""Spectral(
     Hermitian: {self._h}
     Spectra:      {str_spectra}
     Multiplicity: {str_emult}
-)'''
+)"""
         return string
 
     @staticmethod
@@ -114,20 +122,51 @@ class Spectral:
 
     def get_eigspace(self, id):
         """
-        The eigenspace of the matrix
+        The eigenbasis of an eigenspace
 
         Parameters
         ----------
         id : int
+            Index of the desired eigenspace
 
         Returns
         ----------
         espace: array_like
             rectangular matrix whose columns form the eigenbasis
-            of the desired eigensapce.
+            of the desired eigenspace.
         """
 
         if id > self._elabs.max() or id < 1:
-            raise IndexError('Id out of range')
+            raise IndexError("Id out of range")
         espace = self.evcts[:, self._elabs == id]
         return espace
+
+    def get_eigproj(self, id):
+        """
+        The orthogonal projector onto an eigenspace
+
+        Parameters
+        ----------
+        id : int
+            Index of the desired eigenspace
+
+        Returns
+        -------
+        eproj: array_like
+            square matrix representing the orthogonal
+            projector onto the desired eigensapce.
+
+        Raises
+        ------
+        MatrixError
+            If the matrix is not Hermitian
+        """
+        if id > self._elabs.max() or id < 1:
+            raise IndexError("Id out of range")
+
+        if not self._h:
+            raise MatrixError("Non-Hermitian matrix!")
+
+        V = self.get_eigspace(id)
+        eproj = V.dot(V.T)
+        return eproj
