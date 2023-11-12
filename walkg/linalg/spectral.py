@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import ishermitian
+from scipy.linalg import ishermitian, funm
 
 
 class MatrixError(Exception):
@@ -127,13 +127,13 @@ class Spectral:
         Parameters
         ----------
         id : int
-            Index of the desired eigenspace
+            Index of the eigenspace
 
         Returns
         ----------
         espace: array_like
             rectangular matrix whose columns form the eigenbasis
-            of the desired eigenspace.
+            of the eigenspace.
         """
 
         if id > self._elabs.max() or id < 1:
@@ -148,21 +148,19 @@ class Spectral:
         Parameters
         ----------
         id : int
-            Index of the desired eigenspace
+            Index of the eigenspace
 
         Returns
         -------
         eproj: array_like
             square matrix representing the orthogonal
-            projector onto the desired eigensapce.
+            projector onto the eigensapce.
 
         Raises
         ------
         MatrixError
             If the matrix is not Hermitian
         """
-        if id > self._elabs.max() or id < 1:
-            raise IndexError("Id out of range")
 
         if not self._h:
             raise MatrixError("Non-Hermitian matrix!")
@@ -170,3 +168,70 @@ class Spectral:
         V = self.get_eigspace(id)
         eproj = V.dot(V.T)
         return eproj
+
+    def get_eigschur(self, id1, id2=None):
+        """
+        The Schur-product of orthogonal projectors
+
+        Parameters
+        ----------
+        id1 : int
+            Index of the first eigenspace
+        id2 : int
+            Index of the second eigenspace. If not provided,
+            takes the same value as id1
+
+        Returns
+        -------
+        eschur: array_like
+            square matrix representing the Schur-product
+            of projectors
+
+        Raises
+        ------
+        MatrixError
+            If the matrix is not Hermitian
+        """
+        if not self._h:
+            raise MatrixError("Non-Hermitian matrix!")
+
+        V1 = self.get_eigproj(id1)
+
+        if id2 is None:
+            eschur = V1 * V1
+            return eschur
+
+        V2 = self.get_eigproj(id2)
+        eschur = V1 * V2
+
+        return eschur
+
+    def act_eigfun(self, f):
+        """
+        Apply a matrix function
+
+        Parameters
+        ----------
+        f: function
+            Function to be applied to the matrix
+
+        Returns
+        -------
+        fA: array_like
+            The resulting matrix from the evaluation
+
+        Raises
+        ------
+        MatrixError
+            If the matrix is not Hermitian
+        """
+
+        if self._h:
+            s = f(np.repeat(self.evals, self.emult))
+            V = self.evcts
+
+            fA = (s * V).dot(V.conj().T)
+        else:
+            fA = funm(self.matrix, f)
+
+        return fA
