@@ -1,7 +1,7 @@
 """
-walkg.linalg
+walkg.base
 =====
 Tools for linear algebra and matrix analysis.
 """
 
-from walkg.linalg.spectral import Spectral
+from walkg.base.spectral import Spectral
