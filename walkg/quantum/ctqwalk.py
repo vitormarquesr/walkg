@@ -1,6 +1,8 @@
 """ Continuous-Time Quantum Walk """
 
 from walkg.base import Spectral
+from functools import reduce
+import operator
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,26 +20,34 @@ class CTQW(Spectral):
         return Mt
 
     def avg_matrix(self):
-        M = self.get_eigschur(1)
+        # Formula approach
+        E = map(self.get_eigschur, range(1, len(self.evals) + 1))
 
-        for i in range(2, len(self.evals) + 1):
-            M += self.get_eigschur(i)
-
+        M = reduce(operator.add, E)
         return M
 
     def gavg_matrix(self, dist):
-        pass
+        # Monte Carlo approach
+        M_t = map(self.mixing_matrix, dist)
 
-    def plot(self, i, j, t_init=0, t_final=None):
+        M = reduce(operator.add, M_t) / len(dist)
+        return M
 
+    def plot_density(self, i, j, t_init=0, t_final=None):
         # Set reasonable default t_final
         if t_final is None:
-            pass
+            # Gap between first and second eigenvalue
+            delta = self.evals[0] - self.evals[1]
+
+            # Maximum period among cos(delta_rs * t) terms
+            period_max = 2 * np.pi * np.ceil(1 / delta)
+            t_final = period_max
 
         grid = np.arange(t_init, t_final, 0.1)
 
-        density = map(lambda t: self.mixing_matrix(t)[i-1, j-1], grid)
+        density = map(lambda t: self.mixing_matrix(t)[i - 1, j - 1], grid)
 
-        plt.plot(list(grid), list(density))
+        plt.plot([*grid], [*density])
         plt.ylim(0, 1)
+
         plt.show()

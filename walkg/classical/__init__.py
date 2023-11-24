@@ -1,5 +1,5 @@
 """
-walkg.classic
+walkg.classical
 =====
 Classic random walks on graphs
 """
