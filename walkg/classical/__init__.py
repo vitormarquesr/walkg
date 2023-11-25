@@ -1,5 +1,7 @@
 """
 walkg.classical
 =====
-Classic random walks on graphs
+Classical random walks on graphs
 """
+
+from walkg.classical.dtmarkov import DTMarkov
